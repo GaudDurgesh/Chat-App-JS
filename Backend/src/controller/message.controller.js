@@ -23,8 +23,8 @@ export const getMessagesByUserId = async (req, res) => {
 
     const messages = await Message.find({
       $or: [
-        { sendId: myId, receiverId: userToChatId },
-        { sendId: userToChatId, receiverId: myId },
+        { senderId: myId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: myId },
       ],
     });
     res.status(200).json(messages);
@@ -43,20 +43,19 @@ export const sendMessage = async (req, res) => {
     if (!text && !image) {
       return res.status(400).json({ message: "Text or image is required." });
     }
-    
     if (senderId.equals(receiverId)) {
-      return res.status(400).json({ message: "Cannot send messages to yourself." });
+      return res
+        .status(400)
+        .json({ message: "Cannot send messages to yourself." });
     }
-
     const receiverExists = await User.exists({ _id: receiverId });
     if (!receiverExists) {
       return res.status(404).json({ message: "Receiver not found." });
     }
 
-
     let imageUrl;
     if (image) {
-      //upload base64 image to cloudinary
+      // upload base64 image to cloudinary
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
     }
@@ -69,11 +68,14 @@ export const sendMessage = async (req, res) => {
     });
 
     await newMessage.save();
+
+    res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error in sendMessage controller: ", error.message);
-    res.status(500).json({ error: "Interval server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const getChatPartners = async (req, res) => {
   try {
@@ -94,11 +96,12 @@ export const getChatPartners = async (req, res) => {
       ),
     ];
 
-    const chatPartners = await User.find({_id: {$in: chatPartnerIds}}).select("-password")
-    res.status(200).json(chatPartners)
-
+    const chatPartners = await User.find({
+      _id: { $in: chatPartnerIds },
+    }).select("-password");
+    res.status(200).json(chatPartners);
   } catch (error) {
-    console.error("Error in getChatPartners: ", error.message)
-    res.status(500).json({error: "Internal server error"})
+    console.error("Error in getChatPartners: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
