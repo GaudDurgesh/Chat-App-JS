@@ -14,11 +14,16 @@ const io = new Server(server, {
   },
 });
 
-//apply authentication middleware to all socket connection
+// apply authentication middleware to all socket connections
 io.use(socketAuthMiddleware);
 
-//this is for storing online users
-const userSocketMap = {}; // {userId: socketId}
+// we will use this function to check if the user is online or not
+export function getReceiverSocketId(userId) {
+  return userSocketMap[userId];
+}
+
+// this is for storig online users
+const userSocketMap = {}; // {userId:socketId}
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.user.fullName);
@@ -26,15 +31,15 @@ io.on("connection", (socket) => {
   const userId = socket.userId;
   userSocketMap[userId] = socket.id;
 
-  //io.emit() is used to send events to all connected clients
+  // io.emit() is used to send events to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   // with socket.on we listen for events from clients
-  socket.on("disconnected", () => {
+  socket.on("disconnect", () => {
     console.log("A user disconnected", socket.user.fullName);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
-export { app, io, server };
+export { io, app, server };
