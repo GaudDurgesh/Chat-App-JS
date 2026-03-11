@@ -4,25 +4,25 @@ import { ENV } from "../lib/env.js";
 
 export const socketAuthMiddleware = async (socket, next) => {
   try {
-    //extract token from http-only cookies
-    const token = socket.handshake.headers.cookies
+    // extract token from http-only cookies
+    const token = socket.handshake.headers.cookie
       ?.split("; ")
-      .find((row) => row.startWith("jwt="))
-      ?.split("=")(1);
+      .find((row) => row.startsWith("jwt="))
+      ?.split("=")[1];
 
     if (!token) {
-      console.log("SOcket connection rejected: No token provided");
-      return next(new Error("Unauthorized - No token provided"));
+      console.log("Socket connection rejected: No token provided");
+      return next(new Error("Unauthorized - No Token Provided"));
     }
 
-    //verify the token
+    // verify the token
     const decoded = jwt.verify(token, ENV.JWT_SECRET);
     if (!decoded) {
       console.log("Socket connection rejected: Invalid token");
       return next(new Error("Unauthorized - Invalid Token"));
     }
 
-    //find the user form db
+    // find the user fromdb
     const user = await User.findById(decoded.userId).select("-password");
     if (!user) {
       console.log("Socket connection rejected: User not found");
@@ -33,13 +33,11 @@ export const socketAuthMiddleware = async (socket, next) => {
     socket.user = user;
     socket.userId = user._id.toString();
 
-    console.log(
-      `Socket authenticated for user: ${user.fullName} (${user._id})`,
-    );
+    console.log(`Socket authenticated for user: ${user.fullName} (${user._id})`);
 
     next();
   } catch (error) {
-    console.log("Error in Socket authentication: ", error.message);
+    console.log("Error in socket authentication:", error.message);
     next(new Error("Unauthorized - Authentication failed"));
   }
 };
