@@ -22,7 +22,7 @@ app.use("/api/messages", messageRoutes);
 
 // make ready for deployment
 if (ENV.NODE_ENV === "production") {
-  const frontendPath = path.join(process.cwd(), "Backend", "dist");
+  const frontendPath = path.join(process.cwd(), "dist");
 
   app.use(express.static(frontendPath));
 
@@ -35,5 +35,10 @@ server.listen(PORT, () => {
   console.log("Server running on port: " + PORT);
   connectDB();
 });
+
+
+
+
+
 
 
